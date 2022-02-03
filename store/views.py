@@ -2,8 +2,9 @@ from email import message
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib import messages
 from store import urls
+from store.admin import ProductGalleryInline
 from store.forms import ReviewForm
-from .models import Product, ReviewRating
+from .models import Product, ReviewRating, ProductGallery
 from category.models import Category
 from carts.views import _cart_id
 from carts.models import CartItem
@@ -26,7 +27,7 @@ def store(request, category_slug=None):
         product_count = products.count()
     else:
         products = Product.objects.all().filter(is_available=True).order_by('id')
-        paginator = Paginator(products, 3)
+        paginator = Paginator(products, 6)
         page = request.GET.get('page')
         paged_product = paginator.get_page(page)
         product_count = products.count()
@@ -52,10 +53,16 @@ def product_detail(request, category_slug, product_slug):
     # Get the reviews
     reviews = ReviewRating.objects.filter(product_id=single_product.id, status=True) 
 
+    # Get the product gallery
+
+    product_gallery = ProductGallery.objects.filter(product_id=single_product.id)
+
+
     context = {
         'single_product': single_product,
         'in_cart': in_cart,
         'reviews': reviews,
+        'product_gallery': product_gallery,
     }
 
     return render(request, 'store/product_detail.html', context)

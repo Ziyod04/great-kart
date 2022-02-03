@@ -1,4 +1,4 @@
-# Order will not work because the developer from Uzbekistan. PayPal is banned in Uzbekistan, so payment function does not work.
+# Pay function will not work because the developer from Uzbekistan. PayPal is banned in Uzbekistan, so payment function does not work.
 
 
 from django.shortcuts import render, redirect
@@ -134,34 +134,43 @@ def place_order(request, total=0, quantity=0,):
                 'tax': tax,
                 'grand_total': grand_total,
             }
+            
             return render(request, 'orders/payments.html', context)
     else:
         return redirect('checkout')
 
 
-def order_complete(request):
-    order_number = request.GET.get('order_number')
-    transID = request.GET.get('payment_id')
+def order_complete(request, order_number):
 
-    try:
-        order = Order.objects.get(order_number=order_number, is_ordered=True)
-        ordered_products = OrderProduct.objects.filter(order_id=order.id)
+    # This code commented because paypal does not work in UZB and payment will give error. So it handled without payment
 
-        subtotal = 0
-        for i in ordered_products:
-            subtotal += i.product_price * i.quantity
 
-        payment = Payment.objects.get(payment_id=transID)
 
-        context = {
-            'order': order,
-            'ordered_products': ordered_products,
-            'order_number': order.order_number,
-            'transID': payment.payment_id,
-            'payment': payment,
-            'subtotal': subtotal,
-        }
-        return render(request, 'orders/order_complete.html', context)
-    except (Payment.DoesNotExist, Order.DoesNotExist):
-        CartItem.objects.filter(user=request.user).delete()
-        return render(request, 'orders/order_complete.html')
+    # order_number = request.GET.get('order_number')
+    # transID = request.GET.get('payment_id')
+
+    # try:
+    #     order = Order.objects.get(order_number=order_number, is_ordered=True)
+    #     ordered_products = OrderProduct.objects.filter(order_id=order.id)
+
+    #     subtotal = 0
+    #     for i in ordered_products:
+    #         subtotal += i.product_price * i.quantity
+
+    #     payment = Payment.objects.get(payment_id=transID)
+
+    #     context = {
+    #         'order': order,
+    #         'ordered_products': ordered_products,
+    #         'order_number': order.order_number,
+    #         'transID': payment.payment_id,
+    #         'payment': payment,
+    #         'subtotal': subtotal,
+    #     }
+    #     return render(request, 'orders/order_complete.html', context)
+    # except (Payment.DoesNotExist, Order.DoesNotExist):
+    orders = Order.objects.get(user=request.user, is_ordered=False, order_number=order_number)
+    orders.is_ordered = True
+    orders.save()
+    CartItem.objects.filter(user=request.user).delete()
+    return render(request, 'orders/order_complete.html')
